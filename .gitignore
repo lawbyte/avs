@@ -4,3 +4,4 @@ __pycache__
 reports/*.html
 # Exclude template files
 !templates/*.html
+*.json
