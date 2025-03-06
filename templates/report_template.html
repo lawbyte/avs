@@ -425,10 +425,6 @@
                     </div>
                 </div>
                 {{/vulnerabilities}}
-                
-                {{^vulnerabilities}}
-                <p>No vulnerabilities detected in this application.</p>
-                {{/vulnerabilities}}
             </div>
         </div>
         
@@ -451,9 +447,6 @@
                             <td>{{#exported}}<span class="badge badge-high">YES</span>{{/exported}}{{^exported}}<span class="badge badge-low">NO</span>{{/exported}}</td>
                         </tr>
                         {{/components.activities}}
-                        {{^components.activities}}
-                        <tr><td colspan="2">No activities found</td></tr>
-                        {{/components.activities}}
                     </tbody>
                 </table>
                 
@@ -471,9 +464,6 @@
                             <td>{{name}}</td>
                             <td>{{#exported}}<span class="badge badge-high">YES</span>{{/exported}}{{^exported}}<span class="badge badge-low">NO</span>{{/exported}}</td>
                         </tr>
-                        {{/components.services}}
-                        {{^components.services}}
-                        <tr><td colspan="2">No services found</td></tr>
                         {{/components.services}}
                     </tbody>
                 </table>
@@ -493,9 +483,6 @@
                             <td>{{#exported}}<span class="badge badge-high">YES</span>{{/exported}}{{^exported}}<span class="badge badge-low">NO</span>{{/exported}}</td>
                         </tr>
                         {{/components.receivers}}
-                        {{^components.receivers}}
-                        <tr><td colspan="2">No receivers found</td></tr>
-                        {{/components.receivers}}
                     </tbody>
                 </table>
                 
@@ -513,9 +500,6 @@
                             <td>{{name}}</td>
                             <td>{{#exported}}<span class="badge badge-high">YES</span>{{/exported}}{{^exported}}<span class="badge badge-low">NO</span>{{/exported}}</td>
                         </tr>
-                        {{/components.providers}}
-                        {{^components.providers}}
-                        <tr><td colspan="2">No providers found</td></tr>
                         {{/components.providers}}
                     </tbody>
                 </table>
@@ -545,9 +529,6 @@
                                 {{#is_low_risk}}<span class="badge badge-low">{{risk}}</span>{{/is_low_risk}}
                             </td>
                         </tr>
-                        {{/permissions}}
-                        {{^permissions}}
-                        <tr><td colspan="3">No permissions found</td></tr>
                         {{/permissions}}
                     </tbody>
                 </table>
