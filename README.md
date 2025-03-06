@@ -1,5 +1,7 @@
 # APK Vulnerability Scanner (AVS)
 
+![reports](reports.jpg)
+
 ![Version](https://img.shields.io/badge/version-1.1.0-blue)
 ![Python](https://img.shields.io/badge/python-3.8%2B-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-orange)

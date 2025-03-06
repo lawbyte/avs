@@ -1,6 +1,6 @@
 {
     "scan_info": {
-        "timestamp": "2025-03-06 19:01:15",
+        "timestamp": "2025-03-06 19:05:10",
         "apk_path": "ovaa-debug.apk",
         "scan_duration": "0s"
     },
@@ -22,7 +22,7 @@
             "category": "dangerous_permissions",
             "description": "The application requests dangerous permissions that could potentially compromise user privacy.",
             "severity": "Medium",
-            "evidence": "Dangerous permissions requested: android.permission.READ_EXTERNAL_STORAGE, android.permission.WRITE_EXTERNAL_STORAGE"
+            "evidence": "Dangerous permissions requested: android.permission.WRITE_EXTERNAL_STORAGE, android.permission.READ_EXTERNAL_STORAGE"
         },
         {
             "title": "CWE-22 - Path Traversal",
@@ -195,9 +195,9 @@
     ],
     "permissions": [
         {
-            "name": "android.permission.INTERNET",
-            "description": "Allows applications to open network sockets",
-            "risk": "Low"
+            "name": "android.permission.WRITE_EXTERNAL_STORAGE",
+            "description": "Allows writing to external storage",
+            "risk": "Medium"
         },
         {
             "name": "android.permission.READ_EXTERNAL_STORAGE",
@@ -205,9 +205,9 @@
             "risk": "Medium"
         },
         {
-            "name": "android.permission.WRITE_EXTERNAL_STORAGE",
-            "description": "Allows writing to external storage",
-            "risk": "Medium"
+            "name": "android.permission.INTERNET",
+            "description": "Allows applications to open network sockets",
+            "risk": "Low"
         }
     ],
     "components": {
