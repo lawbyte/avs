@@ -1,4 +1,3 @@
 env
-quark-engine
-quark-script
-templates
+__pycache__
+*.html
