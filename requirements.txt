@@ -1,0 +1,10 @@
+quark-engine>=22.03
+androguard==3.4.0a1
+colorama>=0.4.4
+tqdm>=4.62.3
+rich>=12.0.0
+click>=8.0.3
+pyfiglet>=0.8.post1
+python-magic>=0.4.24
+requests>=2.27.1
+apkid>=2.1.3
