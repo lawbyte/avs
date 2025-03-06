@@ -1,3 +1,6 @@
 env
 __pycache__
-*.html
+# Ignore generated HTML reports but keep templates
+reports/*.html
+# Exclude template files
+!templates/*.html

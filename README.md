@@ -55,7 +55,7 @@ cd avs
 pip install -r requirements.txt
 ```
 
-3. (Optional) Install Quark Engine for advanced vulnerability detection:
+3. Install Quark Engine for advanced vulnerability detection:
 ```bash
 pip install -U quark-engine
 ```

@@ -871,9 +871,9 @@ class Scanner:
             else:
                 # If permission is not in our list, determine its risk level
                 risk = "Low"  # Default risk
-                if "SMS" in permission or "CALL" in permission or "LOCATION" in permission:
+                if any(high_term in permission.lower() for high_term in ["SMS", "CALL", "LOCATION", "RECORD", "CONTACTS"]):
                     risk = "High"
-                elif "READ" in permission or "WRITE" in permission:
+                elif any(med_term in permission.lower() for med_term in ["READ", "WRITE", "STORAGE", "NETWORK"]):
                     risk = "Medium"
                     
                 # Add custom description
@@ -1084,212 +1084,52 @@ class Scanner:
             with open(template_path, 'r', encoding='utf-8') as f:
                 template_content = f.read()
             
-            # Prepare template variables
-            package_name = apk_info.get('package_name', 'Unknown')
-            app_version = apk_info.get('version', 'Unknown')
-            min_sdk = apk_info.get('min_sdk', 'Unknown')
-            target_sdk = apk_info.get('target_sdk', 'Unknown')
-            current_date = dt.now().strftime("%Y-%m-%d %H:%M:%S")
-            
             # Count vulnerabilities by severity
             high_count = sum(1 for v in vulnerabilities if v.get('severity', 'Medium').lower() == 'high' or v.get('severity', 'Medium').lower() == 'critical')
             medium_count = sum(1 for v in vulnerabilities if v.get('severity', 'Medium').lower() == 'medium')
             low_count = sum(1 for v in vulnerabilities if v.get('severity', 'Medium').lower() == 'low')
+            total_count = len(vulnerabilities)
             
-            # Calculate security score (100 - weighted vulnerabilities)
-            total_vulnerabilities = len(vulnerabilities)
-            weighted_score = 100
-            if total_vulnerabilities > 0:
-                weighted_score = max(0, 100 - (high_count * 10) - (medium_count * 5) - (low_count * 2))
+            # Process simple template variables
+            template_variables = {
+                # APK Info
+                "{{app_name}}": html.escape(apk_info.get('app_name', 'Unknown')),
+                "{{package_name}}": html.escape(apk_info.get('package_name', 'Unknown')),
+                "{{version}}": html.escape(str(apk_info.get('version', 'Unknown'))),
+                "{{min_sdk}}": html.escape(str(apk_info.get('min_sdk', 'Unknown'))),
+                "{{target_sdk}}": html.escape(str(apk_info.get('target_sdk', 'Unknown'))),
+                "{{size}}": html.escape(str(apk_info.get('file_size', 'Unknown'))),
+                "{{md5}}": html.escape(apk_info.get('md5', 'Unknown')),
+                "{{sha256}}": html.escape(apk_info.get('sha256', 'Unknown')),
+                "{{timestamp}}": dt.now().strftime("%Y-%m-%d %H:%M:%S"),
+                
+                # Statistics
+                "{{high_count}}": str(high_count),
+                "{{medium_count}}": str(medium_count),
+                "{{low_count}}": str(low_count),
+                "{{total_count}}": str(total_count)
+            }
             
-            # Get component counts
-            activities = len(apk_info.get('activities', []))
-            services = len(apk_info.get('services', []))
-            receivers = len(apk_info.get('receivers', []))
-            providers = len(apk_info.get('providers', []))
+            # Replace simple variables
+            for var, value in template_variables.items():
+                template_content = template_content.replace(var, value)
             
-            # Create vulnerability HTML rows
-            vulnerabilities_html = ""
-            for vuln in vulnerabilities:
-                if not isinstance(vuln, dict):
-                    # Skip non-dictionary vulnerabilities
-                    continue
-                
-                # Get vulnerability details with proper fallbacks
-                title = vuln.get('title', vuln.get('type', vuln.get('name', 'Unknown Vulnerability')))
-                severity = vuln.get('severity', vuln.get('risk', 'Medium'))
-                category = vuln.get('category', vuln.get('cwe', 'General'))
-                description = vuln.get('description', vuln.get('desc', 'No description available'))
-                
-                # Extract evidence with fallbacks
-                evidence = ""
-                if 'evidence' in vuln:
-                    evidence = vuln['evidence']
-                elif 'details' in vuln and isinstance(vuln['details'], dict) and 'evidence' in vuln['details']:
-                    evidence = vuln['details']['evidence']
-                elif 'location' in vuln:
-                    evidence = vuln['location']
-                
-                # Convert evidence to HTML-safe string with line breaks
-                if evidence:
-                    # Replace newlines with <br> tags for HTML display
-                    evidence = html.escape(str(evidence)).replace('\n', '<br>')
-                
-                # Determine severity class for color-coding
-                severity_class = "bg-warning"  # Default is warning (Medium)
-                if severity.lower() == "high" or severity.lower() == "critical":
-                    severity_class = "bg-danger"
-                elif severity.lower() == "low":
-                    severity_class = "bg-info"
-                elif severity.lower() == "info":
-                    severity_class = "bg-secondary"
-                
-                # Create the vulnerability card
-                vuln_card = f"""
-                <div class="card mb-3">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">{html.escape(title)}</h5>
-                        <span class="badge {severity_class}">{html.escape(severity)}</span>
-                    </div>
-                    <div class="card-body">
-                        <h6 class="card-subtitle mb-2 text-muted">Category: {html.escape(category)}</h6>
-                        <p class="card-text">{html.escape(description)}</p>
-                        {f'<h6 class="mt-3">Evidence:</h6><div class="evidence-box p-2 bg-light rounded"><pre class="mb-0"><code>{evidence}</code></pre></div>' if evidence else ''}
-                    </div>
-                </div>
-                """
-                vulnerabilities_html += vuln_card
+            # Process vulnerability section
+            vulnerabilities_section = self._process_vulnerabilities_section(template_content, vulnerabilities)
             
-            # Generate category options for filter
-            category_options = ""
-            for category in sorted(set(vuln.get('category', 'General') for vuln in vulnerabilities)):
-                category_options += f'<option value="{category}">{category}</option>'
+            if vulnerabilities_section:
+                template_content = vulnerabilities_section
             
-            # Generate permission rows
-            permission_rows = ""
-            for perm in apk_info.get('permissions', []):
-                perm_name = perm
-                perm_desc = "No description available"
-                risk_level = "Low"
-                
-                # Determine risk level based on permission name
-                if any(danger_term in perm_name.lower() for danger_term in ["camera", "location", "record", "sms", "call", "contacts", "storage"]):
-                    risk_level = "High"
-                    risk_class = "danger"
-                elif any(medium_term in perm_name.lower() for medium_term in ["internet", "bluetooth", "wifi", "account", "vibrate"]):
-                    risk_level = "Medium"
-                    risk_class = "warning"
-                else:
-                    risk_class = "success"
-                
-                permission_rows += f"""
-                <tr>
-                    <td><code>{perm_name}</code></td>
-                    <td>{perm_desc}</td>
-                    <td><span class="badge bg-{risk_class}">{risk_level}</span></td>
-                </tr>
-                """
+            # Process component sections
+            template_content = self._process_components_section(template_content, apk_info)
             
-            # Generate component rows (activities, services, etc.)
-            activity_rows = ""
-            for activity in apk_info.get('activities', []):
-                activity_name = activity
-                is_exported = "Unknown"
-                
-                if isinstance(activity, dict):
-                    activity_name = activity.get('name', 'Unknown')
-                    is_exported = "Yes" if activity.get('exported', False) else "No"
-                
-                exported_class = "danger" if is_exported == "Yes" else "success"
-                
-                activity_rows += f"""
-                <tr>
-                    <td><code>{activity_name}</code></td>
-                    <td><span class="badge bg-{exported_class}">{is_exported}</span></td>
-                </tr>
-                """
+            # Process permissions section
+            template_content = self._process_permissions_section(template_content, apk_info)
             
-            service_rows = ""
-            for service in apk_info.get('services', []):
-                service_name = service
-                is_exported = "Unknown"
-                
-                if isinstance(service, dict):
-                    service_name = service.get('name', 'Unknown')
-                    is_exported = "Yes" if service.get('exported', False) else "No"
-                
-                exported_class = "danger" if is_exported == "Yes" else "success"
-                
-                service_rows += f"""
-                <tr>
-                    <td><code>{service_name}</code></td>
-                    <td><span class="badge bg-{exported_class}">{is_exported}</span></td>
-                </tr>
-                """
+            # Final cleanup of any remaining template tags
+            template_content = self._cleanup_template_tags(template_content)
             
-            receiver_rows = ""
-            for receiver in apk_info.get('receivers', []):
-                receiver_name = receiver
-                is_exported = "Unknown"
-                
-                if isinstance(receiver, dict):
-                    receiver_name = receiver.get('name', 'Unknown')
-                    is_exported = "Yes" if receiver.get('exported', False) else "No"
-                
-                exported_class = "danger" if is_exported == "Yes" else "success"
-                
-                receiver_rows += f"""
-                <tr>
-                    <td><code>{receiver_name}</code></td>
-                    <td><span class="badge bg-{exported_class}">{is_exported}</span></td>
-                </tr>
-                """
-            
-            provider_rows = ""
-            for provider in apk_info.get('providers', []):
-                provider_name = provider
-                is_exported = "Unknown"
-                
-                if isinstance(provider, dict):
-                    provider_name = provider.get('name', 'Unknown')
-                    is_exported = "Yes" if provider.get('exported', False) else "No"
-                
-                exported_class = "danger" if is_exported == "Yes" else "success"
-                
-                provider_rows += f"""
-                <tr>
-                    <td><code>{provider_name}</code></td>
-                    <td><span class="badge bg-{exported_class}">{is_exported}</span></td>
-                </tr>
-                """
-            
-            # Replace template variables
-            template_content = template_content.replace("{{title}}", html.escape(package_name))
-            template_content = template_content.replace("{{package_name}}", package_name)
-            template_content = template_content.replace("{{version}}", app_version)
-            template_content = template_content.replace("{{min_sdk}}", str(min_sdk))
-            template_content = template_content.replace("{{target_sdk}}", str(target_sdk))
-            template_content = template_content.replace("{{date}}", current_date)
-            template_content = template_content.replace("{{security_score}}", str(weighted_score))
-            template_content = template_content.replace("{{high_count}}", str(high_count))
-            template_content = template_content.replace("{{medium_count}}", str(medium_count))
-            template_content = template_content.replace("{{low_count}}", str(low_count))
-            template_content = template_content.replace("{{activities}}", str(activities))
-            template_content = template_content.replace("{{services}}", str(services))
-            template_content = template_content.replace("{{receivers}}", str(receivers))
-            template_content = template_content.replace("{{providers}}", str(providers))
-            template_content = template_content.replace("{{vulnerability_cards}}", vulnerabilities_html)
-            template_content = template_content.replace("{{category_options}}", category_options)
-            template_content = template_content.replace("{{permission_rows}}", permission_rows)
-            template_content = template_content.replace("{{activity_rows}}", activity_rows)
-            template_content = template_content.replace("{{service_rows}}", service_rows)
-            template_content = template_content.replace("{{receiver_rows}}", receiver_rows)
-            template_content = template_content.replace("{{provider_rows}}", provider_rows)
-            
-            # Create reports directory structure if it doesn't exist
-            os.makedirs(os.path.dirname(os.path.abspath(output_file)), exist_ok=True)
-            
-            # Write the HTML report
+            # Write the report
             with open(output_file, 'w', encoding='utf-8') as f:
                 f.write(template_content)
             
@@ -1297,4 +1137,445 @@ class Scanner:
             console.print(f"[red]Error generating HTML report: {e}[/red]")
             if self.verbose:
                 import traceback
-                console.print(f"[red]{traceback.format_exc()}[/red]")
+                console.print(traceback.format_exc())
+    
+    def _process_vulnerabilities_section(self, template_content, vulnerabilities):
+        """Process the vulnerabilities section of the template"""
+        try:
+            # Find the vulnerabilities section pattern
+            vuln_pattern = re.search(
+                r'{{#vulnerabilities}}(.*?){{/vulnerabilities}}',
+                template_content,
+                re.DOTALL
+            )
+            
+            if not vuln_pattern:
+                return None
+            
+            vuln_template = vuln_pattern.group(1)
+            processed_vulns = []
+            
+            # Count vulnerabilities by severity
+            severity_counts = {
+                'Critical': 0,
+                'High': 0,
+                'Medium': 0,
+                'Low': 0,
+                'Info': 0
+            }
+            
+            # Check if we have actual vulnerabilities
+            if vulnerabilities and len(vulnerabilities) > 0:
+                # Process each vulnerability
+                for vuln in vulnerabilities:
+                    # Create a copy of the template for this vulnerability
+                    vuln_html = vuln_template
+                    
+                    # Extract the evidence section
+                    evidence_pattern = re.search(
+                        r'{{#has_evidence}}(.*?){{/has_evidence}}',
+                        vuln_html,
+                        re.DOTALL
+                    )
+                    
+                    # Get vulnerability details
+                    title = vuln.get('title', vuln.get('type', vuln.get('name', 'Unknown')))
+                    severity = vuln.get('severity', vuln.get('risk', 'Medium'))
+                    category = vuln.get('category', vuln.get('cwe', 'Vulnerability'))
+                    description = vuln.get('description', vuln.get('desc', 'No description available'))
+                    evidence = vuln.get('evidence', '')
+                    
+                    if severity in severity_counts:
+                        severity_counts[severity] += 1
+                    
+                    # Replace title, severity, category, and description
+                    vuln_html = vuln_html.replace('{{title}}', html.escape(str(title)))
+                    vuln_html = vuln_html.replace('{{severity}}', html.escape(str(severity)))
+                    vuln_html = vuln_html.replace('{{category}}', html.escape(str(category)))
+                    vuln_html = vuln_html.replace('{{description}}', html.escape(str(description)))
+                    
+                    # Set severity class
+                    severity_class = self._get_severity_class(severity)
+                    vuln_html = vuln_html.replace('{{severity_class}}', severity_class)
+                    
+                    # Handle evidence
+                    if evidence:
+                        # Evidence exists
+                        if evidence_pattern:
+                            evidence_html = evidence_pattern.group(1)
+                            evidence_html = evidence_html.replace('{{evidence}}', html.escape(str(evidence)))
+                            
+                            # Replace has_evidence section
+                            vuln_html = re.sub(
+                                r'{{#has_evidence}}.*?{{/has_evidence}}',
+                                evidence_html,
+                                vuln_html,
+                                flags=re.DOTALL
+                            )
+                    else:
+                        # No evidence
+                        vuln_html = re.sub(
+                            r'{{#has_evidence}}.*?{{/has_evidence}}',
+                            '',
+                            vuln_html,
+                            flags=re.DOTALL
+                        )
+                    
+                    processed_vulns.append(vuln_html)
+                
+                # Calculate total count
+                total_count = sum(severity_counts.values())
+                
+                # Replace the vulnerability section with processed content
+                vuln_section = "\n".join(processed_vulns)
+                template_content = re.sub(
+                    r'{{#vulnerabilities}}.*?{{/vulnerabilities}}',
+                    vuln_section,
+                    template_content,
+                    flags=re.DOTALL
+                )
+                
+                # Since we have vulnerabilities, remove the "No vulnerabilities detected" message
+                template_content = re.sub(
+                    r'{{^vulnerabilities}}.*?{{/vulnerabilities}}',
+                    '',
+                    template_content,
+                    flags=re.DOTALL
+                )
+                
+                # Replace severity counts
+                template_content = template_content.replace('{{high_count}}', str(severity_counts['High'] + severity_counts['Critical']))
+                template_content = template_content.replace('{{medium_count}}', str(severity_counts['Medium']))
+                template_content = template_content.replace('{{low_count}}', str(severity_counts['Low'] + severity_counts['Info']))
+                template_content = template_content.replace('{{total_count}}', str(total_count))
+            else:
+                # No vulnerabilities detected
+                template_content = re.sub(
+                    r'{{#vulnerabilities}}.*?{{/vulnerabilities}}',
+                    '',
+                    template_content,
+                    flags=re.DOTALL
+                )
+                
+                # Find and keep the "No vulnerabilities detected" message
+                no_vulns_pattern = re.search(
+                    r'{{^vulnerabilities}}(.*?){{/vulnerabilities}}',
+                    template_content,
+                    re.DOTALL
+                )
+                
+                if no_vulns_pattern:
+                    no_vulns_html = no_vulns_pattern.group(1)
+                    template_content = re.sub(
+                        r'{{^vulnerabilities}}.*?{{/vulnerabilities}}',
+                        no_vulns_html,
+                        template_content,
+                        flags=re.DOTALL
+                    )
+                
+                # Set all counts to 0
+                template_content = template_content.replace('{{high_count}}', '0')
+                template_content = template_content.replace('{{medium_count}}', '0')
+                template_content = template_content.replace('{{low_count}}', '0')
+                template_content = template_content.replace('{{total_count}}', '0')
+            
+            return template_content
+            
+        except Exception as e:
+            console.print(f"[red]Error processing vulnerabilities section:[/red] {str(e)}")
+            if self.verbose:
+                import traceback
+                console.print(traceback.format_exc())
+            return template_content
+    
+    def _process_components_section(self, template_content, apk_info):
+        """Process the components section of the template"""
+        try:
+            # Initialize default values - components might be nested under 'components' or directly in apk_info
+            components = {}
+            
+            # Check if components are in the nested structure
+            if 'components' in apk_info and isinstance(apk_info['components'], dict):
+                components = {
+                    'activities': apk_info['components'].get('activities', []),
+                    'services': apk_info['components'].get('services', []),
+                    'receivers': apk_info['components'].get('receivers', []),
+                    'providers': apk_info['components'].get('providers', [])
+                }
+            else:
+                # Fall back to flat structure
+                components = {
+                    'activities': apk_info.get('activities', []),
+                    'services': apk_info.get('services', []),
+                    'receivers': apk_info.get('receivers', []),
+                    'providers': apk_info.get('providers', [])
+                }
+            
+            # Process each component type
+            for component_type in components.keys():
+                # Extract the component template pattern
+                comp_pattern = re.search(
+                    r'{{#components\.' + component_type + r'}}(.*?){{/components\.' + component_type + r'}}',
+                    template_content,
+                    re.DOTALL
+                )
+                
+                if not comp_pattern:
+                    continue
+                
+                comp_template = comp_pattern.group(1)
+                processed_comps = []
+                
+                component_list = components[component_type]
+                
+                # Check if there are components to process
+                if not component_list:
+                    # No components - process the empty message
+                    template_content = re.sub(
+                        r'{{#components\.' + component_type + r'}}.*?{{/components\.' + component_type + r'}}',
+                        '',
+                        template_content,
+                        flags=re.DOTALL
+                    )
+                    # Keep the empty message
+                    continue
+                
+                # Components exist - process them
+                for comp in component_list:
+                    # Create a copy of the template for this component
+                    comp_html = comp_template
+                    
+                    # Get component details
+                    if isinstance(comp, dict):
+                        name = comp.get('name', 'Unknown')
+                        exported = comp.get('exported', False)
+                    else:
+                        name = comp
+                        exported = False
+                    
+                    # Replace the name
+                    comp_html = comp_html.replace('{{name}}', html.escape(str(name)))
+                    
+                    # Handle exported conditional
+                    if exported:
+                        comp_html = re.sub(
+                            r'{{#exported}}(.*?){{/exported}}',
+                            r'\1',
+                            comp_html,
+                            flags=re.DOTALL
+                        )
+                        comp_html = re.sub(
+                            r'{{^exported}}.*?{{/exported}}',
+                            '',
+                            comp_html,
+                            flags=re.DOTALL
+                        )
+                    else:
+                        comp_html = re.sub(
+                            r'{{#exported}}.*?{{/exported}}',
+                            '',
+                            comp_html,
+                            flags=re.DOTALL
+                        )
+                        comp_html = re.sub(
+                            r'{{^exported}}(.*?){{/exported}}',
+                            r'\1',
+                            comp_html,
+                            flags=re.DOTALL
+                        )
+                    
+                    processed_comps.append(comp_html)
+                
+                # Replace the component section with processed content
+                comp_section = "\n".join(processed_comps)
+                template_content = re.sub(
+                    r'{{#components\.' + component_type + r'}}.*?{{/components\.' + component_type + r'}}',
+                    comp_section,
+                    template_content,
+                    flags=re.DOTALL
+                )
+                
+                # Since we have components, remove the "No X found" message
+                template_content = re.sub(
+                    r'{{^components\.' + component_type + r'}}.*?{{/components\.' + component_type + r'}}',
+                    '',
+                    template_content,
+                    flags=re.DOTALL
+                )
+            
+            return template_content
+            
+        except Exception as e:
+            console.print(f"[red]Error processing components section:[/red] {str(e)}")
+            if self.verbose:
+                import traceback
+                console.print(traceback.format_exc())
+            return template_content
+    
+    def _process_permissions_section(self, template_content, apk_info):
+        """Process the permissions section of the template"""
+        try:
+            # Get permissions list from apk_info
+            permissions = apk_info.get('permissions', [])
+            
+            # Extract the permissions template pattern
+            perm_pattern = re.search(
+                r'{{#permissions}}(.*?){{/permissions}}',
+                template_content,
+                re.DOTALL
+            )
+            
+            if not perm_pattern:
+                return template_content
+            
+            perm_template = perm_pattern.group(1)
+            processed_perms = []
+            
+            # Check if we have any permissions
+            if permissions and len(permissions) > 0:
+                # Process each permission
+                for perm in permissions:
+                    # Create a copy of the template for this permission
+                    perm_html = perm_template
+                    
+                    # Get permission details
+                    if isinstance(perm, dict):
+                        name = perm.get('name', 'Unknown Permission')
+                        description = perm.get('description', 'No description available')
+                        risk = perm.get('risk', 'Low')
+                    else:
+                        # If it's just a string, assume it's the name
+                        name = perm
+                        description = 'No description available'
+                        risk = 'Low'
+                    
+                    # Replace name and description
+                    perm_html = perm_html.replace('{{name}}', html.escape(str(name)))
+                    perm_html = perm_html.replace('{{description}}', html.escape(str(description)))
+                    perm_html = perm_html.replace('{{risk}}', html.escape(str(risk)))
+                    
+                    # Handle risk level conditionals
+                    is_high_risk = risk.lower() == 'high' or risk.lower() == 'critical'
+                    is_medium_risk = risk.lower() == 'medium'
+                    is_low_risk = risk.lower() == 'low' or risk.lower() == 'info'
+                    
+                    if is_high_risk:
+                        perm_html = re.sub(
+                            r'{{#is_high_risk}}(.*?){{/is_high_risk}}',
+                            r'\1',
+                            perm_html,
+                            flags=re.DOTALL
+                        )
+                        perm_html = re.sub(
+                            r'{{#is_medium_risk}}.*?{{/is_medium_risk}}',
+                            '',
+                            perm_html,
+                            flags=re.DOTALL
+                        )
+                        perm_html = re.sub(
+                            r'{{#is_low_risk}}.*?{{/is_low_risk}}',
+                            '',
+                            perm_html,
+                            flags=re.DOTALL
+                        )
+                    elif is_medium_risk:
+                        perm_html = re.sub(
+                            r'{{#is_high_risk}}.*?{{/is_high_risk}}',
+                            '',
+                            perm_html,
+                            flags=re.DOTALL
+                        )
+                        perm_html = re.sub(
+                            r'{{#is_medium_risk}}(.*?){{/is_medium_risk}}',
+                            r'\1',
+                            perm_html,
+                            flags=re.DOTALL
+                        )
+                        perm_html = re.sub(
+                            r'{{#is_low_risk}}.*?{{/is_low_risk}}',
+                            '',
+                            perm_html,
+                            flags=re.DOTALL
+                        )
+                    else:  # Low risk
+                        perm_html = re.sub(
+                            r'{{#is_high_risk}}.*?{{/is_high_risk}}',
+                            '',
+                            perm_html,
+                            flags=re.DOTALL
+                        )
+                        perm_html = re.sub(
+                            r'{{#is_medium_risk}}.*?{{/is_medium_risk}}',
+                            '',
+                            perm_html,
+                            flags=re.DOTALL
+                        )
+                        perm_html = re.sub(
+                            r'{{#is_low_risk}}(.*?){{/is_low_risk}}',
+                            r'\1',
+                            perm_html,
+                            flags=re.DOTALL
+                        )
+                    
+                    processed_perms.append(perm_html)
+                
+                # Replace the permissions section with processed content
+                perm_section = "\n".join(processed_perms)
+                template_content = re.sub(
+                    r'{{#permissions}}.*?{{/permissions}}',
+                    perm_section,
+                    template_content,
+                    flags=re.DOTALL
+                )
+                
+                # Since we have permissions, remove the "No permissions found" message
+                template_content = re.sub(
+                    r'{{^permissions}}.*?{{/permissions}}',
+                    '',
+                    template_content,
+                    flags=re.DOTALL
+                )
+            else:
+                # No permissions - process the empty message
+                template_content = re.sub(
+                    r'{{#permissions}}.*?{{/permissions}}',
+                    '',
+                    template_content,
+                    flags=re.DOTALL
+                )
+                # Keep the empty message
+            
+            return template_content
+            
+        except Exception as e:
+            console.print(f"[red]Error processing permissions section:[/red] {str(e)}")
+            if self.verbose:
+                import traceback
+                console.print(traceback.format_exc())
+            return template_content
+    
+    def _cleanup_template_tags(self, content):
+        """Remove any remaining template tags from the content"""
+        # Remove any remaining template variables
+        content = re.sub(r'{{\w+}}', '', content)
+        
+        # Remove any remaining conditional blocks
+        content = re.sub(r'{{#.*?}}.*?{{/.*?}}', '', content, flags=re.DOTALL)
+        content = re.sub(r'{{^.*?}}.*?{{/.*?}}', '', content, flags=re.DOTALL)
+        
+        # Remove any remaining template tags
+        content = re.sub(r'{{.*?}}', '', content)
+        
+        return content
+    
+    def _get_severity_class(self, severity):
+        """Get CSS class for severity level"""
+        severity = str(severity).lower()
+        if severity in ["critical", "high"]:
+            return "high"
+        elif severity == "medium":
+            return "medium"
+        elif severity == "low":
+            return "low"
+        else:
+            return "info"

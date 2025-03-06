@@ -1,0 +1,187 @@
+{
+    "scan_info": {
+        "timestamp": "2025-03-06 18:35:33",
+        "apk_path": "dvba_v1.1.0.apk",
+        "scan_duration": "0s"
+    },
+    "apk_info": {
+        "package_name": "com.app.damnvulnerablebank",
+        "app_name": "DamnVulnerableBank",
+        "version": "1.0",
+        "sdk_version": "29",
+        "min_sdk": "21",
+        "apkid_results": {},
+        "file_size": 3784858,
+        "md5": "5b40b49cd80dbe20ba611d32045b57c6",
+        "sha1": "23dcd688fe4dd830cf92309755a5bbd603df8789",
+        "sha256": "76c308fac6a655a3534771777780e004feb1d91be032857768c891b2baf40ba6"
+    },
+    "vulnerabilities": [
+        {
+            "title": "CWE-749 - Exposed Dangerous Method or Function",
+            "category": "CWE-749",
+            "description": "Configure JavaScript execution on websites",
+            "severity": "Medium",
+            "evidence": "Found in method: Lcom/app/damnvulnerablebank/CurrencyRates; onCreate (Landroid/os/Bundle;)V\nFirst API: Landroid/webkit/WebView;.getSettings()Landroid/webkit/WebSettings;\nSecond API: Landroid/webkit/WebSettings;.setJavaScriptEnabled(Z)V",
+            "details": {
+                "caller_class": "Lcom/app/damnvulnerablebank/CurrencyRates;",
+                "caller_method": "onCreate",
+                "caller_descriptor": "(Landroid/os/Bundle;)V",
+                "cwe": "749",
+                "rule_file": "configureJsExecution.json"
+            }
+        },
+        {
+            "title": "CWE-921 - Storage of Sensitive Data in a Mechanism without Access Control",
+            "category": "CWE-921",
+            "description": "Check file existence",
+            "severity": "Medium",
+            "evidence": "Found in method: Lcom/app/damnvulnerablebank/MainActivity; onCreate (Landroid/os/Bundle;)V\nFirst API: Ljava/io/File;.<init>(Ljava/lang/String;)V\nSecond API: Ljava/io/File;.exists()Z",
+            "details": {
+                "caller_class": "Lcom/app/damnvulnerablebank/MainActivity;",
+                "caller_method": "onCreate",
+                "caller_descriptor": "(Landroid/os/Bundle;)V",
+                "cwe": "921",
+                "rule_file": "checkFileExistence.json"
+            }
+        },
+        {
+            "title": "CWE-921 - Storage of Sensitive Data in a Mechanism without Access Control",
+            "category": "CWE-921",
+            "description": "Check file existence",
+            "severity": "Medium",
+            "evidence": "Found in method: La/a/a/a/a; R ()Z\nFirst API: Ljava/io/File;.<init>(Ljava/lang/String;)V\nSecond API: Ljava/io/File;.exists()Z",
+            "details": {
+                "caller_class": "La/a/a/a/a;",
+                "caller_method": "R",
+                "caller_descriptor": "()Z",
+                "cwe": "921",
+                "rule_file": "checkFileExistence.json"
+            }
+        },
+        {
+            "title": "CWE-94 - Code Injection",
+            "category": "CWE-94",
+            "description": "Load external code from other APK.",
+            "severity": "High",
+            "evidence": "Found in method: Lcom/google/android/gms/dynamite/DynamiteModule; c (Landroid/content/Context; Ljava/lang/String; Z)I\nFirst API: Landroid/content/Context;.createPackageContext(Ljava/lang/String; I)Landroid/content/Context;\nSecond API: Ljava/lang/ClassLoader;.loadClass(Ljava/lang/String;)Ljava/lang/Class;",
+            "details": {
+                "caller_class": "Lcom/google/android/gms/dynamite/DynamiteModule;",
+                "caller_method": "c",
+                "caller_descriptor": "(Landroid/content/Context; Ljava/lang/String; Z)I",
+                "cwe": "94",
+                "rule_file": "loadExternalCode.json"
+            }
+        }
+    ],
+    "permissions": [
+        {
+            "name": "android.permission.USE_BIOMETRIC",
+            "description": "Custom permission, verify its usage",
+            "risk": "Low"
+        },
+        {
+            "name": "android.permission.INTERNET",
+            "description": "Allows applications to open network sockets",
+            "risk": "Low"
+        },
+        {
+            "name": "android.permission.USE_FINGERPRINT",
+            "description": "Custom permission, verify its usage",
+            "risk": "Low"
+        }
+    ],
+    "components": {
+        "activities": [
+            {
+                "name": "com.app.damnvulnerablebank.Myprofile",
+                "exported": false
+            },
+            {
+                "name": "com.app.damnvulnerablebank.CurrencyRates",
+                "exported": false
+            },
+            {
+                "name": "com.app.damnvulnerablebank.ResetPassword",
+                "exported": false
+            },
+            {
+                "name": "com.app.damnvulnerablebank.ViewBeneficiary",
+                "exported": false
+            },
+            {
+                "name": "com.app.damnvulnerablebank.ApproveBeneficiary",
+                "exported": false
+            },
+            {
+                "name": "com.app.damnvulnerablebank.PendingBeneficiary",
+                "exported": false
+            },
+            {
+                "name": "com.app.damnvulnerablebank.AddBeneficiary",
+                "exported": false
+            },
+            {
+                "name": "com.app.damnvulnerablebank.SendMoney",
+                "exported": false
+            },
+            {
+                "name": "com.app.damnvulnerablebank.ViewBeneficiaryAdmin",
+                "exported": false
+            },
+            {
+                "name": "com.app.damnvulnerablebank.GetTransactions",
+                "exported": false
+            },
+            {
+                "name": "com.app.damnvulnerablebank.ViewBalance",
+                "exported": false
+            },
+            {
+                "name": "com.app.damnvulnerablebank.Dashboard",
+                "exported": false
+            },
+            {
+                "name": "com.app.damnvulnerablebank.RegisterBank",
+                "exported": false
+            },
+            {
+                "name": "com.app.damnvulnerablebank.BankLogin",
+                "exported": false
+            },
+            {
+                "name": "com.app.damnvulnerablebank.MainActivity",
+                "exported": false
+            },
+            {
+                "name": "com.app.damnvulnerablebank.SplashScreen",
+                "exported": false
+            },
+            {
+                "name": "androidx.biometric.DeviceCredentialHandlerActivity",
+                "exported": false
+            },
+            {
+                "name": "com.google.firebase.auth.internal.FederatedSignInActivity",
+                "exported": false
+            },
+            {
+                "name": "com.google.android.gms.common.api.GoogleApiActivity",
+                "exported": false
+            }
+        ],
+        "services": [
+            {
+                "name": "com.google.firebase.components.ComponentDiscoveryService",
+                "exported": false
+            }
+        ],
+        "receivers": [],
+        "providers": [
+            {
+                "name": "com.google.firebase.provider.FirebaseInitProvider",
+                "exported": false
+            }
+        ]
+    }
+}

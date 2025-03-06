@@ -1,0 +1,263 @@
+{
+    "scan_info": {
+        "timestamp": "2025-03-06 18:48:33",
+        "apk_path": "ovaa-debug.apk",
+        "scan_duration": "0s"
+    },
+    "apk_info": {
+        "package_name": "oversecured.ovaa",
+        "app_name": "Oversecured Vulnerable Android App",
+        "version": "1.0",
+        "sdk_version": "28",
+        "min_sdk": "17",
+        "apkid_results": {},
+        "file_size": 2120541,
+        "md5": "68e0dec0715287a5bb1a01c853f55bcf",
+        "sha1": "73a6848e37c097877038f26c5410c787cd7020ac",
+        "sha256": "caa8f4ba8c8e832544c1d09d308586ed2ce9dd8a9da861d4778b52e17ec3b4cf"
+    },
+    "vulnerabilities": [
+        {
+            "title": "Dangerous Permissions",
+            "category": "dangerous_permissions",
+            "description": "The application requests dangerous permissions that could potentially compromise user privacy.",
+            "severity": "Medium",
+            "evidence": "Dangerous permissions requested: android.permission.READ_EXTERNAL_STORAGE, android.permission.WRITE_EXTERNAL_STORAGE"
+        },
+        {
+            "title": "CWE-22 - Path Traversal",
+            "category": "CWE-22",
+            "description": "Access a file in an external directory",
+            "severity": "Medium",
+            "evidence": "Found in method: Loversecured/ovaa/providers/TheftOverwriteProvider; openFile (Landroid/net/Uri; Ljava/lang/String;)Landroid/os/ParcelFileDescriptor;\nFirst API: Landroid/os/Environment;.getExternalStorageDirectory()Ljava/io/File;\nSecond API: Ljava/io/File;.<init>(Ljava/io/File; Ljava/lang/String;)V\nFile path: Landroid/net/Uri;->getLastPathSegment()Ljava/lang/String;()\nWARNING: Path is user-controlled (not hardcoded)",
+            "details": {
+                "caller_class": "Loversecured/ovaa/providers/TheftOverwriteProvider;",
+                "caller_method": "openFile",
+                "caller_descriptor": "(Landroid/net/Uri; Ljava/lang/String;)Landroid/os/ParcelFileDescriptor;",
+                "cwe": "22",
+                "rule_file": "accessFileInExternalDir.json"
+            }
+        },
+        {
+            "title": "CWE-23 - Relative Path Traversal",
+            "category": "CWE-23",
+            "description": "Access a file in an external directory",
+            "severity": "Medium",
+            "evidence": "Found in method: Loversecured/ovaa/providers/TheftOverwriteProvider; openFile (Landroid/net/Uri; Ljava/lang/String;)Landroid/os/ParcelFileDescriptor;\nFirst API: Landroid/os/Environment;.getExternalStorageDirectory()Ljava/io/File;\nSecond API: Ljava/io/File;.<init>(Ljava/io/File; Ljava/lang/String;)V",
+            "details": {
+                "caller_class": "Loversecured/ovaa/providers/TheftOverwriteProvider;",
+                "caller_method": "openFile",
+                "caller_descriptor": "(Landroid/net/Uri; Ljava/lang/String;)Landroid/os/ParcelFileDescriptor;",
+                "cwe": "23",
+                "rule_file": "accessFileInExternalDir.json"
+            }
+        },
+        {
+            "title": "CWE-319 - Cleartext Transmission of Sensitive Information",
+            "category": "CWE-319",
+            "description": "Set Retrofit Base Url",
+            "severity": "Medium",
+            "evidence": "Found in method: Loversecured/ovaa/network/RetrofitInstance; getInstance ()Lretrofit2/Retrofit;\nFirst API: Lretrofit2/Retrofit$Builder;.<init>()V\nSecond API: Lretrofit2/Retrofit$Builder;.baseUrl(Ljava/lang/String;)Lretrofit2/Retrofit$Builder;",
+            "details": {
+                "caller_class": "Loversecured/ovaa/network/RetrofitInstance;",
+                "caller_method": "getInstance",
+                "caller_descriptor": "()Lretrofit2/Retrofit;",
+                "cwe": "319",
+                "rule_file": "setRetrofitBaseUrl.json"
+            }
+        },
+        {
+            "title": "CWE-327 - Use of a Broken or Risky Cryptographic Algorithm",
+            "category": "CWE-327",
+            "description": "Use of cryptographic algorithm",
+            "severity": "Critical",
+            "evidence": "Found in method: Loversecured/ovaa/utils/WeakCrypto; encrypt (Ljava/lang/String;)Ljava/lang/String;\nFirst API: Ljavax/crypto/Cipher;.getInstance(Ljava/lang/String;)Ljavax/crypto/Cipher;\nSecond API: Ljavax/crypto/Cipher;.init(I Ljava/security/Key;)V\nCrypto algorithm: Ljavax/crypto/Cipher;->getInstance(Ljava/lang/String;)Ljavax/crypto/Cipher;(AES)",
+            "details": {
+                "caller_class": "Loversecured/ovaa/utils/WeakCrypto;",
+                "caller_method": "encrypt",
+                "caller_descriptor": "(Ljava/lang/String;)Ljava/lang/String;",
+                "cwe": "327",
+                "rule_file": "useOfCryptographicAlgo.json"
+            }
+        },
+        {
+            "title": "CWE-502 - Deserialization of Untrusted Data",
+            "category": "CWE-502",
+            "description": "Deserialize Data",
+            "severity": "Medium",
+            "evidence": "Found in method: Landroidx/versionedparcelable/VersionedParcel; readSerializable ()Ljava/io/Serializable;\nFirst API: Landroidx/versionedparcelable/VersionedParcel$1;.<init>(Landroidx/versionedparcelable/VersionedParcel; Ljava/io/InputStream;)V\nSecond API: Ljava/io/ObjectInputStream;.readObject()Ljava/lang/Object;",
+            "details": {
+                "caller_class": "Landroidx/versionedparcelable/VersionedParcel;",
+                "caller_method": "readSerializable",
+                "caller_descriptor": "()Ljava/io/Serializable;",
+                "cwe": "502",
+                "rule_file": "deserializeData.json"
+            }
+        },
+        {
+            "title": "CWE-73 - External Control of File Name or Path",
+            "category": "CWE-73",
+            "description": "Access a file in an external directory",
+            "severity": "Medium",
+            "evidence": "Found in method: Loversecured/ovaa/providers/TheftOverwriteProvider; openFile (Landroid/net/Uri; Ljava/lang/String;)Landroid/os/ParcelFileDescriptor;\nFirst API: Landroid/os/Environment;.getExternalStorageDirectory()Ljava/io/File;\nSecond API: Ljava/io/File;.<init>(Ljava/io/File; Ljava/lang/String;)V\nFile path: Landroid/net/Uri;->getLastPathSegment()Ljava/lang/String;()\nWARNING: Path is user-controlled (not hardcoded)",
+            "details": {
+                "caller_class": "Loversecured/ovaa/providers/TheftOverwriteProvider;",
+                "caller_method": "openFile",
+                "caller_descriptor": "(Landroid/net/Uri; Ljava/lang/String;)Landroid/os/ParcelFileDescriptor;",
+                "cwe": "73",
+                "rule_file": "accessFileInExternalDir.json"
+            }
+        },
+        {
+            "title": "CWE-749 - Exposed Dangerous Method or Function",
+            "category": "CWE-749",
+            "description": "Configure JavaScript execution on websites",
+            "severity": "Medium",
+            "evidence": "Found in method: Loversecured/ovaa/activities/WebViewActivity; setupWebView (Landroid/webkit/WebView;)V\nFirst API: Landroid/webkit/WebView;.getSettings()Landroid/webkit/WebSettings;\nSecond API: Landroid/webkit/WebSettings;.setJavaScriptEnabled(Z)V",
+            "details": {
+                "caller_class": "Loversecured/ovaa/activities/WebViewActivity;",
+                "caller_method": "setupWebView",
+                "caller_descriptor": "(Landroid/webkit/WebView;)V",
+                "cwe": "749",
+                "rule_file": "configureJsExecution.json"
+            }
+        },
+        {
+            "title": "CWE-798 - Use of Hard-coded Credentials",
+            "category": "CWE-798",
+            "description": "Detect APK using SecretKeySpec.",
+            "severity": "High",
+            "evidence": "Found in method: Loversecured/ovaa/utils/WeakCrypto; encrypt (Ljava/lang/String;)Ljava/lang/String;\nFirst API: Ljava/lang/String;.getBytes()[B\nSecond API: Ljavax/crypto/spec/SecretKeySpec;.<init>([B Ljava/lang/String;)V\nHardcoded AES key: 49u5gh249gh24985ghf429gh4ch8f23f",
+            "details": {
+                "caller_class": "Loversecured/ovaa/utils/WeakCrypto;",
+                "caller_method": "encrypt",
+                "caller_descriptor": "(Ljava/lang/String;)Ljava/lang/String;",
+                "cwe": "798",
+                "rule_file": "findSecretKeySpec.json"
+            }
+        },
+        {
+            "title": "CWE-921 - Storage of Sensitive Data in a Mechanism without Access Control",
+            "category": "CWE-921",
+            "description": "Check file existence",
+            "severity": "Medium",
+            "evidence": "Found in method: Loversecured/ovaa/OversecuredApplication; updateChecker ()V\nFirst API: Ljava/io/File;.<init>(Ljava/lang/String;)V\nSecond API: Ljava/io/File;.exists()Z",
+            "details": {
+                "caller_class": "Loversecured/ovaa/OversecuredApplication;",
+                "caller_method": "updateChecker",
+                "caller_descriptor": "()V",
+                "cwe": "921",
+                "rule_file": "checkFileExistence.json"
+            }
+        },
+        {
+            "title": "CWE-921 - Storage of Sensitive Data in a Mechanism without Access Control",
+            "category": "CWE-921",
+            "description": "Check file existence",
+            "severity": "Medium",
+            "evidence": "Found in method: Loversecured/ovaa/objects/DeleteFilesSerializable; readObject (Ljava/io/ObjectInputStream;)V\nFirst API: Ljava/io/File;.<init>(Ljava/lang/String;)V\nSecond API: Ljava/io/File;.exists()Z",
+            "details": {
+                "caller_class": "Loversecured/ovaa/objects/DeleteFilesSerializable;",
+                "caller_method": "readObject",
+                "caller_descriptor": "(Ljava/io/ObjectInputStream;)V",
+                "cwe": "921",
+                "rule_file": "checkFileExistence.json"
+            }
+        },
+        {
+            "title": "CWE-94 - Code Injection",
+            "category": "CWE-94",
+            "description": "Load external code from other APK.",
+            "severity": "High",
+            "evidence": "Found in method: Loversecured/ovaa/OversecuredApplication; invokePlugins ()V\nFirst API: Loversecured/ovaa/OversecuredApplication;.createPackageContext(Ljava/lang/String; I)Landroid/content/Context;\nSecond API: Ljava/lang/ClassLoader;.loadClass(Ljava/lang/String;)Ljava/lang/Class;",
+            "details": {
+                "caller_class": "Loversecured/ovaa/OversecuredApplication;",
+                "caller_method": "invokePlugins",
+                "caller_descriptor": "()V",
+                "cwe": "94",
+                "rule_file": "loadExternalCode.json"
+            }
+        },
+        {
+            "title": "CWE-940 - Improper Verification of Source of a Communication Channel",
+            "category": "CWE-940",
+            "description": "Load Url from Intent and open WebView",
+            "severity": "Medium",
+            "evidence": "Found in method: Loversecured/ovaa/activities/WebViewActivity; onCreate (Landroid/os/Bundle;)V\nFirst API: Landroid/content/Intent;.getStringExtra(Ljava/lang/String;)Ljava/lang/String;\nSecond API: Landroid/webkit/WebView;.loadUrl(Ljava/lang/String;)V",
+            "details": {
+                "caller_class": "Loversecured/ovaa/activities/WebViewActivity;",
+                "caller_method": "onCreate",
+                "caller_descriptor": "(Landroid/os/Bundle;)V",
+                "cwe": "940",
+                "rule_file": "LoadUrlFromIntent.json"
+            }
+        }
+    ],
+    "permissions": [
+        {
+            "name": "android.permission.READ_EXTERNAL_STORAGE",
+            "description": "Allows reading from external storage",
+            "risk": "Medium"
+        },
+        {
+            "name": "android.permission.WRITE_EXTERNAL_STORAGE",
+            "description": "Allows writing to external storage",
+            "risk": "Medium"
+        },
+        {
+            "name": "android.permission.INTERNET",
+            "description": "Allows applications to open network sockets",
+            "risk": "Low"
+        }
+    ],
+    "components": {
+        "activities": [
+            {
+                "name": "oversecured.ovaa.activities.DeeplinkActivity",
+                "exported": false
+            },
+            {
+                "name": "oversecured.ovaa.activities.WebViewActivity",
+                "exported": false
+            },
+            {
+                "name": "oversecured.ovaa.activities.LoginActivity",
+                "exported": false
+            },
+            {
+                "name": "oversecured.ovaa.activities.EntranceActivity",
+                "exported": false
+            },
+            {
+                "name": "oversecured.ovaa.activities.MainActivity",
+                "exported": false
+            }
+        ],
+        "services": [
+            {
+                "name": "oversecured.ovaa.services.InsecureLoggerService",
+                "exported": false
+            }
+        ],
+        "receivers": [
+            {
+                "name": "oversecured.ovaa.receivers.UselessReceiver",
+                "exported": false
+            }
+        ],
+        "providers": [
+            {
+                "name": "oversecured.ovaa.providers.TheftOverwriteProvider",
+                "exported": false
+            },
+            {
+                "name": "oversecured.ovaa.providers.CredentialsProvider",
+                "exported": false
+            },
+            {
+                "name": "androidx.core.content.FileProvider",
+                "exported": false
+            }
+        ]
+    }
+}

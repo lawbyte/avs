@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APK Vulnerability Report - {{app_name}}</title>
+    <style>
+        :root {
+            --primary-color: #2962ff;
+            --secondary-color: #0039cb;
+            --accent-color: #768fff;
+            --background-color: #f5f5f5;
+            --card-color: #ffffff;
+            --text-primary: #333333;
+            --text-secondary: #757575;
+            --danger-color: #f44336;
+            --warning-color: #ff9800;
+            --info-color: #2196f3;
+            --success-color: #4caf50;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding-bottom: 50px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            box-shadow: var(--box-shadow);
+        }
+        
+        header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .timestamp {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .card {
+            background-color: var(--card-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            padding: 15px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-body {
+            padding: 20px;
+        }
+        
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            border-radius: var(--border-radius);
+            padding: 15px;
+            box-shadow: var(--box-shadow);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .stat-card.high {
+            background-color: rgba(244, 67, 54, 0.1);
+            border-left: 4px solid var(--danger-color);
+        }
+        
+        .stat-card.medium {
+            background-color: rgba(255, 152, 0, 0.1);
+            border-left: 4px solid var(--warning-color);
+        }
+        
+        .stat-card.low {
+            background-color: rgba(76, 175, 80, 0.1);
+            border-left: 4px solid var(--success-color);
+        }
+        
+        .stat-card.info {
+            background-color: rgba(33, 150, 243, 0.1);
+            border-left: 4px solid var(--info-color);
+        }
+        
+        .stat-count {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        th {
+            background-color: rgba(0, 0, 0, 0.05);
+            text-align: left;
+            padding: 12px 15px;
+            font-weight: 600;
+        }
+        
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        tr:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: white;
+        }
+        
+        .badge-high {
+            background-color: var(--danger-color);
+        }
+        
+        .badge-medium {
+            background-color: var(--warning-color);
+        }
+        
+        .badge-low {
+            background-color: var(--success-color);
+        }
+        
+        .badge-info {
+            background-color: var(--info-color);
+        }
+        
+        .vulnerability-details {
+            border-left: 3px solid var(--primary-color);
+            padding-left: 15px;
+            margin: 10px 0;
+        }
+        
+        .evidence-block {
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            font-size: 13px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .collapsible {
+            background-color: rgba(0, 0, 0, 0.03);
+            cursor: pointer;
+            padding: 15px;
+            width: 100%;
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 16px;
+            font-weight: 500;
+            border-radius: 4px;
+            margin: 5px 0;
+            transition: background-color 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .active, .collapsible:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+        
+        .collapsible:after {
+            content: '\002B';
+            color: var(--text-secondary);
+            font-weight: bold;
+            float: right;
+            margin-left: 5px;
+        }
+        
+        .active:after {
+            content: "\2212";
+        }
+        
+        .content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            background-color: #fafafa;
+            padding: 0 15px;
+            border-radius: 0 0 4px 4px;
+        }
+        
+        footer {
+            margin-top: 50px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        .description-text {
+            margin-bottom: 15px;
+            color: #555;
+        }
+        
+        .info-pair {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        
+        .info-label {
+            width: 200px;
+            font-weight: 600;
+        }
+        
+        .info-value {
+            flex: 1;
+        }
+        
+        .vulnerability-count {
+            margin-left: 10px;
+            background-color: rgba(0, 0, 0, 0.1);
+            border-radius: 20px;
+            padding: 2px 10px;
+            font-size: 14px;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .summary-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            header .container {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .timestamp {
+                margin-top: 5px;
+            }
+            
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .vulnerability-count {
+                margin-left: 0;
+                margin-top: 5px;
+            }
+            
+            .info-pair {
+                flex-direction: column;
+            }
+            
+            .info-label {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">APK Vulnerability Scanner</div>
+            <div class="timestamp">Report Generated: {{timestamp}}</div>
+        </div>
+    </header>
+    
+    <div class="container">
+        <!-- Application Summary -->
+        <div class="card">
+            <div class="card-header">Application Information</div>
+            <div class="card-body">
+                <div class="info-pair">
+                    <div class="info-label">Application Name:</div>
+                    <div class="info-value">{{app_name}}</div>
+                </div>
+                <div class="info-pair">
+                    <div class="info-label">Package Name:</div>
+                    <div class="info-value">{{package_name}}</div>
+                </div>
+                <div class="info-pair">
+                    <div class="info-label">Version:</div>
+                    <div class="info-value">{{version}}</div>
+                </div>
+                <div class="info-pair">
+                    <div class="info-label">Min SDK Version:</div>
+                    <div class="info-value">{{min_sdk}}</div>
+                </div>
+                <div class="info-pair">
+                    <div class="info-label">Target SDK Version:</div>
+                    <div class="info-value">{{target_sdk}}</div>
+                </div>
+                <div class="info-pair">
+                    <div class="info-label">Size:</div>
+                    <div class="info-value">{{size}}</div>
+                </div>
+                <div class="info-pair">
+                    <div class="info-label">MD5:</div>
+                    <div class="info-value">{{md5}}</div>
+                </div>
+                <div class="info-pair">
+                    <div class="info-label">SHA256:</div>
+                    <div class="info-value">{{sha256}}</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Vulnerability Summary -->
+        <div class="card">
+            <div class="card-header">Vulnerability Summary</div>
+            <div class="card-body">
+                <div class="summary-stats">
+                    <div class="stat-card high">
+                        <div class="stat-count">{{high_count}}</div>
+                        <div class="stat-label">High Risk Vulnerabilities</div>
+                    </div>
+                    <div class="stat-card medium">
+                        <div class="stat-count">{{medium_count}}</div>
+                        <div class="stat-label">Medium Risk Vulnerabilities</div>
+                    </div>
+                    <div class="stat-card low">
+                        <div class="stat-count">{{low_count}}</div>
+                        <div class="stat-label">Low Risk Vulnerabilities</div>
+                    </div>
+                    <div class="stat-card info">
+                        <div class="stat-count">{{total_count}}</div>
+                        <div class="stat-label">Total Findings</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Vulnerabilities -->
+        <div class="card">
+            <div class="card-header">
+                Vulnerability Details
+                <span class="vulnerability-count">{{total_count}} issues found</span>
+            </div>
+            <div class="card-body">
+                {{#vulnerabilities}}
+                <button class="collapsible">
+                    {{title}}
+                    <span class="badge badge-{{severity_class}}">{{severity}}</span>
+                </button>
+                <div class="content">
+                    <div class="vulnerability-details">
+                        <div class="info-pair">
+                            <div class="info-label">Category:</div>
+                            <div class="info-value">{{category}}</div>
+                        </div>
+                        <div class="info-pair">
+                            <div class="info-label">Description:</div>
+                            <div class="info-value">{{description}}</div>
+                        </div>
+                        {{#has_evidence}}
+                        <div class="info-pair">
+                            <div class="info-label">Evidence:</div>
+                            <div class="info-value">
+                                <div class="evidence-block">{{evidence}}</div>
+                            </div>
+                        </div>
+                        {{/has_evidence}}
+                    </div>
+                </div>
+                {{/vulnerabilities}}
+                
+                {{^vulnerabilities}}
+                <p>No vulnerabilities detected in this application.</p>
+                {{/vulnerabilities}}
+            </div>
+        </div>
+        
+        <!-- Components Analysis -->
+        <div class="card">
+            <div class="card-header">Components Analysis</div>
+            <div class="card-body">
+                <h3>Activities</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Activity Name</th>
+                            <th>Exported</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#components.activities}}
+                        <tr>
+                            <td>{{name}}</td>
+                            <td>{{#exported}}<span class="badge badge-high">YES</span>{{/exported}}{{^exported}}<span class="badge badge-low">NO</span>{{/exported}}</td>
+                        </tr>
+                        {{/components.activities}}
+                        {{^components.activities}}
+                        <tr><td colspan="2">No activities found</td></tr>
+                        {{/components.activities}}
+                    </tbody>
+                </table>
+                
+                <h3 style="margin-top: 20px;">Services</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Service Name</th>
+                            <th>Exported</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#components.services}}
+                        <tr>
+                            <td>{{name}}</td>
+                            <td>{{#exported}}<span class="badge badge-high">YES</span>{{/exported}}{{^exported}}<span class="badge badge-low">NO</span>{{/exported}}</td>
+                        </tr>
+                        {{/components.services}}
+                        {{^components.services}}
+                        <tr><td colspan="2">No services found</td></tr>
+                        {{/components.services}}
+                    </tbody>
+                </table>
+                
+                <h3 style="margin-top: 20px;">Broadcast Receivers</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Receiver Name</th>
+                            <th>Exported</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#components.receivers}}
+                        <tr>
+                            <td>{{name}}</td>
+                            <td>{{#exported}}<span class="badge badge-high">YES</span>{{/exported}}{{^exported}}<span class="badge badge-low">NO</span>{{/exported}}</td>
+                        </tr>
+                        {{/components.receivers}}
+                        {{^components.receivers}}
+                        <tr><td colspan="2">No receivers found</td></tr>
+                        {{/components.receivers}}
+                    </tbody>
+                </table>
+                
+                <h3 style="margin-top: 20px;">Content Providers</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Provider Name</th>
+                            <th>Exported</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#components.providers}}
+                        <tr>
+                            <td>{{name}}</td>
+                            <td>{{#exported}}<span class="badge badge-high">YES</span>{{/exported}}{{^exported}}<span class="badge badge-low">NO</span>{{/exported}}</td>
+                        </tr>
+                        {{/components.providers}}
+                        {{^components.providers}}
+                        <tr><td colspan="2">No providers found</td></tr>
+                        {{/components.providers}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Permissions Analysis -->
+        <div class="card">
+            <div class="card-header">Permissions Analysis</div>
+            <div class="card-body">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Permission</th>
+                            <th>Description</th>
+                            <th>Risk Level</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#permissions}}
+                        <tr>
+                            <td>{{name}}</td>
+                            <td>{{description}}</td>
+                            <td>
+                                {{#is_high_risk}}<span class="badge badge-high">{{risk}}</span>{{/is_high_risk}}
+                                {{#is_medium_risk}}<span class="badge badge-medium">{{risk}}</span>{{/is_medium_risk}}
+                                {{#is_low_risk}}<span class="badge badge-low">{{risk}}</span>{{/is_low_risk}}
+                            </td>
+                        </tr>
+                        {{/permissions}}
+                        {{^permissions}}
+                        <tr><td colspan="3">No permissions found</td></tr>
+                        {{/permissions}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>APK Vulnerability Scanner | Version 1.1.0 | &copy; 2025 APK Security Project</p>
+    </footer>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const collapsibles = document.querySelectorAll('.collapsible');
+            
+            collapsibles.forEach(function(collapsible) {
+                collapsible.addEventListener('click', function() {
+                    this.classList.toggle('active');
+                    const content = this.nextElementSibling;
+                    
+                    if (content.style.maxHeight) {
+                        content.style.maxHeight = null;
+                    } else {
+                        content.style.maxHeight = content.scrollHeight + "px";
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
