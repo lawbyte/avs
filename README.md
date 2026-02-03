@@ -48,18 +48,13 @@ The scanner detects numerous vulnerability types, including:
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/lawbyte/avs.git
+git clone --recursive https://github.com/lawbyte/avs.git
 cd avs
 ```
 
 2. Install the required dependencies:
 ```bash
 pip install -r requirements.txt
-```
-
-3. Install Quark Engine for advanced vulnerability detection:
-```bash
-pip install -U quark-engine
 ```
 
 ## Usage
