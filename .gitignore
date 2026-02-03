@@ -1,5 +1,5 @@
 env
-__pycache__
+modules/__pycache__
 # Ignore generated HTML reports but keep templates
 reports/*.html
 # Exclude template files
