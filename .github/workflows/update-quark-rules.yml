@@ -1,0 +1,118 @@
+name: Update Quark Rules
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:  # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  update-rules:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Setup Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Clone quark-script CWE directories
+        run: |
+          echo "Cloning CWE-* directories from quark-script..."
+          
+          # Create temporary directory
+          mkdir -p /tmp/quark-script-temp
+          cd /tmp/quark-script-temp
+          
+          # Initialize sparse checkout
+          git init
+          git remote add origin https://github.com/quark-engine/quark-script.git
+          git config core.sparseCheckout true
+          
+          # Configure sparse checkout to only get CWE-* directories
+          echo "CWE-*/" >> .git/info/sparse-checkout
+          
+          # Pull the directories
+          git pull origin master
+          
+          # Copy to our repository
+          rm -rf $GITHUB_WORKSPACE/quark-script/CWE-*
+          cp -r CWE-* $GITHUB_WORKSPACE/quark-script/
+          
+          echo "✅ CWE directories updated"
+      
+      - name: Clone quark-rules
+        run: |
+          echo "Cloning rules directory from quark-rules..."
+          
+          # Create temporary directory
+          mkdir -p /tmp/quark-rules-temp
+          cd /tmp/quark-rules-temp
+          
+          # Initialize sparse checkout
+          git init
+          git remote add origin https://github.com/ev-flow/quark-rules.git
+          git config core.sparseCheckout true
+          
+          # Configure sparse checkout to only get rules directory
+          echo "rules/" >> .git/info/sparse-checkout
+          
+          # Pull the rules directory
+          git pull origin master
+          
+          # Copy to our repository
+          rm -rf $GITHUB_WORKSPACE/quark-script/rules
+          cp -r rules $GITHUB_WORKSPACE/quark-script/
+          
+          echo "✅ Rules directory updated"
+      
+      - name: Check for changes
+        id: check_changes
+        run: |
+          cd $GITHUB_WORKSPACE
+          if [[ -n $(git status --porcelain) ]]; then
+            echo "changes=true" >> $GITHUB_OUTPUT
+            echo "📝 Changes detected"
+          else
+            echo "changes=false" >> $GITHUB_OUTPUT
+            echo "✅ No changes detected"
+          fi
+      
+      - name: Commit and push changes
+        if: steps.check_changes.outputs.changes == 'true'
+        run: |
+          cd $GITHUB_WORKSPACE
+          git add quark-script/CWE-*
+          git add quark-script/rules
+          
+          # Get counts for commit message
+          cwe_count=$(ls -d quark-script/CWE-* 2>/dev/null | wc -l)
+          rules_count=$(ls quark-script/rules/*.json 2>/dev/null | wc -l)
+          
+          git commit -m "🤖 Auto-update Quark rules
+
+- Updated $cwe_count CWE directories from quark-script
+- Updated $rules_count rules from quark-rules
+
+Updated: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          
+          git push
+          
+          echo "✅ Changes committed and pushed"
+      
+      - name: Summary
+        run: |
+          echo "## 📊 Update Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          cwe_count=$(ls -d $GITHUB_WORKSPACE/quark-script/CWE-* 2>/dev/null | wc -l)
+          rules_count=$(ls $GITHUB_WORKSPACE/quark-script/rules/*.json 2>/dev/null | wc -l)
+          
+          echo "- **CWE Directories:** $cwe_count" >> $GITHUB_STEP_SUMMARY
+          echo "- **Rule Files:** $rules_count" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** ${{ steps.check_changes.outputs.changes == 'true' && '✅ Updated' || '✅ No changes' }}" >> $GITHUB_STEP_SUMMARY

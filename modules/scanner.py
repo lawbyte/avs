@@ -379,6 +379,127 @@ class Scanner:
                         if self.verbose:
                             console.print(f"[red]Error analyzing with rule {json_file}:[/red] {str(e)}")
             
+            # Process rules from the general rules directory
+            rules_dir = os.path.join(quark_script_dir, "rules")
+            
+            if os.path.exists(rules_dir):
+                if self.verbose:
+                    console.print(f"[cyan]Scanning rules directory: {rules_dir}[/cyan]")
+                
+                # Get all JSON files in the rules directory
+                rule_files = [f for f in os.listdir(rules_dir) if f.endswith('.json')]
+                
+                if self.verbose:
+                    console.print(f"[cyan]Found {len(rule_files)} rule files in rules directory[/cyan]")
+                
+                for rule_file in rule_files:
+                    rule_path = os.path.join(rules_dir, rule_file)
+                    
+                    try:
+                        # Load the rule metadata
+                        with open(rule_path, 'r') as f:
+                            rule_data = json.load(f)
+                        
+                        rule_instance = Rule(rule_path)
+                        
+                        # Run Quark analysis with this rule
+                        quark_result = runQuarkAnalysis(self.apk_path, rule_instance)
+                        
+                        # Process the results
+                        if quark_result and quark_result.behaviorOccurList:
+                            crime = rule_data.get('crime', 'Suspicious behavior detected')
+                            labels = rule_data.get('label', [])
+                            score = rule_data.get('score', 0)
+                            
+                            # Determine severity based on score and labels
+                            severity = "Medium"  # Default
+                            
+                            # High-risk labels
+                            high_risk_labels = ['sms', 'calllog', 'location', 'contacts', 'record', 'camera']
+                            if any(label in high_risk_labels for label in labels):
+                                severity = "High"
+                            
+                            # Critical if score is very high
+                            if score > 1.0:
+                                severity = "High"
+                            elif score > 2.0:
+                                severity = "Critical"
+                            
+                            # Low severity for common operations
+                            low_risk_labels = ['collection', 'network', 'file']
+                            if all(label in low_risk_labels for label in labels) and score < 0.5:
+                                severity = "Low"
+                            
+                            # Create category from labels or use generic
+                            category = "_".join(labels) if labels else "general"
+                            
+                            # Process each behavior occurrence
+                            for behavior in quark_result.behaviorOccurList:
+                                try:
+                                    evidence_details = []
+                                    
+                                    # Extract method caller information
+                                    caller = behavior.methodCaller
+                                    caller_class = caller.className
+                                    caller_method = caller.methodName
+                                    caller_descriptor = caller.descriptor
+                                    
+                                    evidence_details.append(f"Found in method: {caller.fullName}")
+                                    
+                                    # Extract API call information
+                                    if behavior.firstAPI:
+                                        first_api = behavior.firstAPI
+                                        evidence_details.append(f"First API: {first_api.className}.{first_api.methodName}{first_api.descriptor}")
+                                    
+                                    if behavior.secondAPI:
+                                        second_api = behavior.secondAPI
+                                        evidence_details.append(f"Second API: {second_api.className}.{second_api.methodName}{second_api.descriptor}")
+                                    
+                                    # Add labels to evidence
+                                    if labels:
+                                        evidence_details.append(f"Labels: {', '.join(labels)}")
+                                    
+                                    # Add score to evidence
+                                    evidence_details.append(f"Risk Score: {score}")
+                                    
+                                    # Create vulnerability entry
+                                    title = f"{category.upper()} - {crime}"
+                                    
+                                    vulnerability = {
+                                        "title": title,
+                                        "category": category,
+                                        "description": crime,
+                                        "severity": severity,
+                                        "evidence": "\n".join(evidence_details),
+                                        "details": {
+                                            "caller_class": caller_class,
+                                            "caller_method": caller_method,
+                                            "caller_descriptor": caller_descriptor,
+                                            "labels": labels,
+                                            "score": score,
+                                            "rule_file": os.path.basename(rule_file)
+                                        }
+                                    }
+                                    
+                                    vulnerabilities.append(vulnerability)
+                                    
+                                    if self.verbose:
+                                        console.print(f"[green]Detected {title}:[/green] {crime}")
+                                        for line in evidence_details:
+                                            console.print(f"  [cyan]{line}[/cyan]")
+                                        console.print("")
+                                        
+                                except Exception as e:
+                                    if self.verbose:
+                                        console.print(f"[red]Error processing behavior for {rule_file}:[/red] {str(e)}")
+                    
+                    except Exception as e:
+                        if self.verbose:
+                            console.print(f"[red]Error analyzing with rule {rule_file}:[/red] {str(e)}")
+            else:
+                if self.verbose:
+                    console.print(f"[yellow]Rules directory not found: {rules_dir}[/yellow]")
+            
             return vulnerabilities
             
         except Exception as e:
